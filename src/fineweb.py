@@ -23,12 +23,14 @@ class FineWebDataset(IterableDataset):
     def __iter__(self):
         for entry in self.dataset:
             text = extract_text_from_fineweb_entry(entry)
+            if not text.strip():  # Skip empty or invalid text entries
+                continue
             tokens = self.tokenizer(text, truncation=True, padding="max_length", max_length=self.max_length, return_tensors="pt")
             input_ids = tokens["input_ids"].squeeze(0)
             labels = input_ids.clone()  # For language modeling, input_ids are the targets
             yield input_ids, labels
 
-def prepare_dataloader(dataset, tokenizer, batch_size=32, max_length=128):
+def prepare_dataloader(dataset, tokenizer, batch_size=1, max_length=128):
     """Prepare a DataLoader for the FineWeb dataset."""
     fineweb_dataset = FineWebDataset(dataset, tokenizer, max_length)
     return DataLoader(fineweb_dataset, batch_size=batch_size)
